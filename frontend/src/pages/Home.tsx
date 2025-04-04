@@ -1,27 +1,12 @@
 import React from 'react';
-import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Plane as Plant,
-  Brain,
-  BarChart3,
-  MessageSquare,
   ArrowRight,
-  ChevronRight,
-  MousePointer2,
-  ArrowDown
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 import Market from '../components/Market';
-
-interface Feature {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  color: string;
-  size?: 'default' | 'large' | 'wide' | 'tall';
-  link?: boolean;
-  badge?: string;
-}
 
 const ScrollIndicator = () => {
   const { scrollYProgress } = useScroll();
@@ -39,265 +24,231 @@ const ScrollIndicator = () => {
   );
 };
 
-const ScrollDownIndicator = () => (
+const GradientOrb = ({ className }: { className: string }) => (
   <motion.div
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{
-      duration: 1,
-      repeat: Infinity,
-      repeatType: "reverse"
+    className={`absolute rounded-full mix-blend-multiply filter blur-xl ${className}`}
+    animate={{
+      scale: [1, 1.2, 1],
+      opacity: [0.4, 0.7, 0.4],
     }}
-    className="flex absolute bottom-10 left-1/2 flex-col items-center text-gray-500 transform -translate-x-1/2"
-  >
-    <ArrowDown className="mb-2 w-5 h-5" />
-    <span className="text-sm font-medium">Scroll to explore</span>
-  </motion.div>
+    transition={{
+      duration: 8,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
 );
 
-const FeatureCard: React.FC<Feature & { index: number }> = ({
-  icon: Icon,
-  title,
-  description,
-  color,
-  size = 'default',
-  index,
-  link,
-  badge
-}) => {
-  const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10%" });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial="initial"
-      animate={isInView ? "animate" : "initial"}
-      variants={{
-        initial: { opacity: 0, y: 50 },
-        animate: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-            delay: index * 0.15
-          }
-        }
-      }}
-      whileHover={{ scale: 1.02, translateY: -8 }}
-      className={`
-        ${color} 
-        rounded-2xl p-6 
-        transition-all duration-500 
-        shadow-lg hover:shadow-2xl
-        relative 
-        overflow-hidden
-        group
-        flex flex-col
-        backdrop-blur-sm
-        ${size === 'large' ? 'md:col-span-2 md:row-span-2' : ''}
-        ${size === 'wide' ? 'md:col-span-2' : ''}
-        ${size === 'tall' ? 'md:row-span-2' : ''}
-      `}
-    >
-      <div className="flex relative z-10 flex-col h-full">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-start space-x-3">
-            <motion.div
-              whileHover={{ rotate: 12, scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              className="bg-white/20 p-2.5 rounded-xl backdrop-blur-sm"
-            >
-              <Icon className="w-5 h-5" />
-            </motion.div>
-            <div>
-              {badge && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="inline-block px-2.5 py-1 mb-2 text-xs font-medium rounded-full bg-white/20"
-                >
-                  {badge}
-                </motion.span>
-              )}
-              <h3 className="text-lg font-semibold leading-tight">{title}</h3>
-            </div>
-          </div>
-          {link && (
-            <Link
-              to="#"
-              className="opacity-0 transition-all duration-300 group-hover:opacity-100"
-            >
-              <motion.div
-                whileHover={{ x: 5, scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400 }}
-                className="p-2 rounded-lg hover:bg-white/10"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </motion.div>
-            </Link>
-          )}
-        </div>
-
-        <p className="flex-1 max-w-lg opacity-90 text-sm/relaxed">
-          {description}
-        </p>
-      </div>
-
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br to-transparent pointer-events-none from-white/10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      />
-      <motion.div
-        className="absolute -right-8 -bottom-8 w-40 h-40 rounded-full opacity-40 blur-3xl transition-opacity duration-500 bg-white/10"
-        whileHover={{ opacity: 0.8, scale: 1.2 }}
-      />
-    </motion.div>
-  );
-};
-
 export const Home: React.FC = () => {
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-
-  const features: Feature[] = [
-    {
-      icon: Plant,
-      title: "Early Disease Detection",
-      description: "Take a photo of your crops to instantly identify diseases and get treatment recommendations",
-      color: 'bg-gradient-to-br from-primary-600 to-primary-700 text-white',
-      size: 'large',
-      badge: 'New AI Model',
-      link: true
-    },
-    {
-      icon: Brain,
-      title: "Smart Crop Advisory",
-      description: "Get personalized advice based on your soil, weather, and crop conditions",
-      color: 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white',
-      size: 'tall',
-      badge: 'Beta',
-      link: true
-    },
-    {
-      icon: BarChart3,
-      title: "Market Prices",
-      description: "Stay updated with real-time market prices and connect with buyers directly",
-      color: 'bg-gradient-to-br from-green-600 to-green-700 text-white',
-      link: true
-    },
-    {
-      icon: MessageSquare,
-      title: "24/7 Farming Assistant",
-      description: "Get instant answers to your farming questions in your preferred language",
-      color: 'bg-gradient-to-br from-primary-600 to-primary-700 text-white',
-      size: 'wide',
-      badge: 'Popular',
-      link: true
-    }
-  ];
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 300], [0, -50]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   return (
-    <div className="overflow-hidden relative min-h-screen bg-white">
+    <div className="overflow-hidden relative bg-white">
       <ScrollIndicator />
 
-      <div className="relative">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
         <motion.div
-          style={{ y }}
-          className="absolute top-0 right-0 w-1/2 h-screen bg-gradient-to-bl to-transparent blur-3xl from-primary-50/30 -z-10"
-        />
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 5, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute left-10 top-20"
+        >
+        </motion.div>
         <motion.div
-          style={{ y }}
-          className="absolute left-0 top-1/2 w-1/2 h-screen bg-gradient-to-tr to-transparent blur-3xl from-emerald-50/30 -z-10"
-        />
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -10, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute right-20 top-40"
+        >
+        </motion.div>
+        <motion.div
+          animate={{
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 200,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute bottom-20 left-1/4"
+        >
+        </motion.div>
       </div>
 
-      <div className="px-4 py-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative mx-auto mb-20 max-w-2xl text-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-block mb-4"
-          >
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              className="px-4 py-1.5 rounded-full bg-primary-50 text-primary-600 text-sm font-medium inline-flex items-center gap-2"
-            >
-              <MousePointer2 className="w-4 h-4" />
-              Launching Soon
-            </motion.span>
-          </motion.div>
+      {/* Hero Section */}
+      <section className="relative min-h-[calc(100vh-30px)] flex items-center">
+        <div className="overflow-hidden absolute inset-0">
+          <GradientOrb className="w-[600px] h-[600px] -left-48 -top-48 bg-blue-100/80" />
+          <GradientOrb className="w-[700px] h-[700px] -right-48 -bottom-48 bg-emerald-100/80" />
+          <GradientOrb className="w-[500px] h-[500px] left-1/4 top-1/4 bg-primary-100/50" />
+        </div>
 
-          <motion.h1
-            className="mb-6 text-4xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r md:text-5xl lg:text-6xl from-primary-600 to-primary-500"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            Smart Farming Made Simple
-          </motion.h1>
+        <motion.div style={{ y, opacity }} className="relative z-10 w-full">
+          <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="relative mx-auto max-w-3xl">
+              <div className="text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="inline-block mb-8"
+                >
+                  <motion.div
+                    className="inline-flex gap-2 items-center px-6 py-3 text-sm font-medium bg-gradient-to-r to-emerald-50 rounded-full transition-colors duration-300 from-primary-50 text-primary-900 hover:to-emerald-100 hover:from-primary-100"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Sparkles className="w-4 h-4 text-primary-500" />
+                    <span className="text-xs font-semibold tracking-wide text-transparent uppercase bg-clip-text bg-gradient-to-r to-emerald-700 from-primary-700">
+                      Revolutionizing Agriculture
+                    </span>
+                  </motion.div>
+                </motion.div>
 
-          <motion.p
-            className="mx-auto mb-8 max-w-xl text-lg text-gray-600"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-          >
-            Use AI to make better farming decisions, detect crop diseases early, and maximize your yield
-          </motion.p>
+                <div className="relative">
+                  <motion.h1
+                    className="mb-6 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.8 }}
+                  >
+                    <span className="text-gray-900">Smart Farming Made Simple with</span>{' '}
+                    <motion.span
+                      className="inline-block relative font-black font-['Righteous'] text-transparent bg-clip-text bg-gradient-to-r via-emerald-600 from-primary-600 to-primary-600 bg-size-200 hover:scale-105 transition-transform duration-300"
+                      animate={{
+                        backgroundPosition: ['0%', '200%'],
+                      }}
+                      transition={{
+                        duration: 20,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      Generative AI
+                      <motion.div
+                        className="absolute -top-8 -right-8"
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 1, duration: 0.5 }}
+                      >
+                        <Sparkles className="w-6 h-6 text-primary-400" />
+                      </motion.div>
+                    </motion.span>
+                  </motion.h1>
 
-          <motion.div
-            className="flex flex-wrap gap-4 justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/crop-advisory"
-                className="inline-flex items-center px-6 py-3 text-white rounded-xl shadow-lg transition-all duration-300 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/30"
-              >
-                Get Started
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/disease-detection"
-                className="inline-flex items-center px-6 py-3 text-gray-700 bg-white rounded-xl border border-gray-200 shadow-lg transition-all duration-300 hover:bg-gray-50 hover:border-gray-300 shadow-gray-200/40 hover:shadow-xl"
-              >
-                Try Disease Detection AI
-              </Link>
-            </motion.div>
-          </motion.div>
+                  <motion.p
+                    className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-gray-600 md:text-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.8 }}
+                  >
+                    Use AI to make better farming decisions, detect crop diseases early, and maximize your yield
+                  </motion.p>
+                  <motion.div
+                    className="flex flex-wrap gap-4 justify-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.8 }}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative group"
+                    >
+                      <motion.div
+                        className="absolute inset-0 rounded-xl opacity-20 blur-xl transition-all duration-300 bg-primary-500 group-hover:opacity-40 group-hover:scale-105"
+                        initial={{ scale: 0.8 }}
+                      />
+                      <Link
+                        to="/crop-advisory"
+                        className="inline-flex relative items-center px-6 py-3 text-base font-semibold text-white rounded-xl shadow-lg transition-all duration-300 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/30"
+                      >
+                        Get Started
+                        <ChevronRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative group"
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-gray-100 rounded-xl opacity-20 blur-xl transition-all duration-300 group-hover:opacity-40 group-hover:scale-105"
+                        initial={{ scale: 0.8 }}
+                      />
+                      <Link
+                        to="/disease-detection"
+                        className="inline-flex relative items-center px-6 py-3 text-base font-semibold text-gray-900 bg-white rounded-xl border border-gray-200 shadow-lg transition-all duration-300 hover:bg-gray-50 hover:border-gray-300 shadow-gray-200/40 hover:shadow-xl"
+                      >
+                        Try Disease Detection
+                        <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Stats Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                    className="grid grid-cols-1 gap-4 mt-16 md:grid-cols-3"
+                  >
+                    {[
+                      { value: "98%", label: "Detection Accuracy", color: "from-blue-500 to-primary-500" },
+                      { value: "24/7", label: "Real-time Monitoring", color: "from-emerald-500 to-green-500" },
+                      { value: "50+", label: "Supported Crops", color: "from-primary-500 to-emerald-500" },
+                    ].map((stat, index) => (
+                      <motion.div
+                        key={index}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        className="relative group"
+                      >
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-br from-gray-100 to-white rounded-xl opacity-50 blur-xl transition-opacity group-hover:opacity-70"
+                        />
+                        <div className="relative p-6 text-center rounded-xl border border-gray-100 shadow-md backdrop-blur-sm transition-all duration-300 bg-white/90 group-hover:border-gray-200 group-hover:shadow-lg">
+                          <div className={`mb-1 text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
+                            {stat.value}
+                          </div>
+                          <div className="text-sm font-medium text-gray-600">{stat.label}</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
+      </section>
 
-        <ScrollDownIndicator />
-
+      {/* Market Section */}
+      <section className="py-24 bg-gradient-to-b from-white to-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mb-20"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8"
         >
           <Market />
         </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(200px,auto)]">
-          {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} index={index} />
-          ))}
-        </div>
-      </div>
+      </section>
     </div>
   );
 };
