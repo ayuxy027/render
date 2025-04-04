@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Detection Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .upload-section.drag-over {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 400px;
+            margin: 20px 0;
+            display: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .result-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: none;
+        }
+        .prediction {
+            font-size: 24px;
+            color: #2c5282;
+            font-weight: bold;
+        }
+        .confidence {
+            font-size: 18px;
+            color: #4a5568;
+        }
+        #uploadButton {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        #uploadButton:hover {
+            background: #45a049;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            text-align: center;
+            color: #2e7d32;
+        }
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crop Detection Model</h1>
+
+        <div id="modelStatus" class="loading">Loading model...</div>
+
+        <div class="upload-section" id="dropZone">
+            <h2>Upload Crop Image</h2>
+            <input type="file" id="imageInput" accept="image/*" hidden>
+            <button id="uploadButton">Choose Image</button>
+            <p>Drag and drop an image here or click the button above</p>
+            <p id="supportedCrops">Loading supported crops...</p>
+        </div>
+
+        <div id="loading" class="loading">Analyzing image... Please wait...</div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <img id="imagePreview">
+
+        <div id="resultSection" class="result-section">
+            <h2>Detection Result</h2>
+            <div id="prediction" class="prediction"></div>
+            <div id="confidence" class="confidence"></div>
+        </div>
+    </div>
+
+    <script>
+        let model;
+        let labels = [];
+
+        // Load model and labels
+        async function initialize() {
+            try {
+                document.getElementById('modelStatus').style.display = 'block';
+
+                model = await tf.loadLayersModel(window.location.origin + '/ml/model.json');
+
+                const metadataResponse = await fetch('/ml/metadata.json');
+                if (!metadataResponse.ok) throw new Error('Failed to load metadata');
+
+                const metadata = await metadataResponse.json();
+                labels = metadata.labels || [];
+
+                document.getElementById('modelStatus').style.display = 'none';
+                document.getElementById('supportedCrops').textContent =
+                    `Supported crops: ${labels.join(', ')}`;
+            } catch (error) {
+                document.getElementById('modelStatus').textContent = 'Error loading model.';
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        async function processImage(imageElement) {
+            try {
+                let tensor = tf.browser.fromPixels(imageElement)
+                    .resizeNearestNeighbor([224, 224])
+                    .toFloat()
+                    .expandDims()
+                    .div(255.0);
+
+                const predictions = await model.predict(tensor).data();
+                tensor.dispose();
+
+                const topPrediction = Array.from(predictions)
+                    .map((prob, i) => ({ probability: prob, label: labels[i] }))
+                    .sort((a, b) => b.probability - a.probability)[0];
+
+                document.getElementById('prediction').textContent =
+                    `Detected: ${topPrediction.label}`;
+                document.getElementById('confidence').textContent =
+                    `Confidence: ${(topPrediction.probability * 100).toFixed(2)}%`;
+                document.getElementById('resultSection').style.display = 'block';
+            } catch (error) {
+                document.getElementById('errorMessage').textContent =
+                    'Error processing image.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        function handleImageUpload(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                document.getElementById('errorMessage').textContent =
+                    'Please upload a valid image.';
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = document.getElementById('imagePreview');
+                img.src = event.target.result;
+                img.style.display = 'block';
+
+                img.onload = async () => {
+                    await processImage(img);
+                    document.getElementById('loading').style.display = 'none';
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('uploadButton').addEventListener('click', () => {
+            document.getElementById('imageInput').click();
+        });
+
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            handleImageUpload(e.target.files[0]);
+        });
+
+        document.getElementById('dropZone').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        });
+
+        document.getElementById('dropZone').addEventListener('dragleave', (e) => {
+            e.currentTarget.classList.remove('drag-over');
+        });
+
+        document.getElementById('dropZone').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            handleImageUpload(e.dataTransfer.files[0]);
+        });
+
+        initialize();
+    </script>
+</body>
+</html>

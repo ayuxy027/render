@@ -1,0 +1,71 @@
+{
+  "navbar": {
+    "diseaseDetection": "Disease Detection",
+    "cropAdvisory": "Crop Advisory",
+    "marketInsights": "Market Insights",
+    "chatbot": "Smart Farming"
+  },
+  "home": {
+    "hero": {
+      "title": "Smart Farming Made Simple",
+      "description": "Use AI to make better farming decisions, detect crop diseases early, and maximize your yield",
+      "getStarted": "Get Started",
+      "tryAI": "Try AI Assistant",
+      "badge": "New"
+    },
+    "features": {
+      "diseaseDetection": {
+        "title": "Early Disease Detection",
+        "description": "Take a photo of your crops to instantly identify diseases and get treatment recommendations"
+      },
+      "cropAdvisory": {
+        "title": "Smart Crop Advisory",
+        "description": "Get personalized advice based on your soil, weather, and crop conditions"
+      },
+      "marketInsights": {
+        "title": "Market Prices",
+        "description": "Stay updated with real-time market prices and connect with buyers directly"
+      },
+      "aiAssistant": {
+        "title": "24/7 Farming Assistant",
+        "description": "Get instant answers to your farming questions in your preferred language"
+      },
+      "community": {
+        "title": "Community Support",
+        "description": "Connect with fellow farmers and experts worldwide"
+      },
+      "innovation": {
+        "title": "Innovative Solutions",
+        "description": "Explore cutting-edge farming technologies and practices"
+      }
+    }
+  },
+  "common": {
+    "uploadImage": "Upload Image",
+    "contactExpert": "Contact Expert",
+    "loading": "Loading..."
+  },
+  "diseaseDetection": {
+    "dragDropText": "Drag and drop your image here",
+    "uploadInstructions": "or click to select a file",
+    "chemical": "Chemical Solutions",
+    "organic": "Organic Solutions",
+    "preventive": "Preventive Measures"
+  },
+  "cropAdvisory": {
+    "plantingSchedule": "Planting Schedule",
+    "soilReadiness": "Soil Readiness",
+    "seasonalAdvice": "Seasonal Advice",
+    "weatherUpdates": "Weather Updates"
+  },
+  "marketInsights": {
+    "priceAlerts": "Price Alerts",
+    "buyerDirectory": "Buyer Directory",
+    "trends": "Market Trends"
+  },
+  "chatbot": {
+    "placeholder": "Type your question here...",
+    "sendMessage": "Send Message",
+    "voiceInput": "Voice Input"
+  }
+}
