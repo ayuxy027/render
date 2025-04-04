@@ -194,7 +194,6 @@ export const Home: React.FC = () => {
 
       {/* Market Section */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white pointer-events-none to-gray-50/10" />
         <Market />
       </div>
     </div>
