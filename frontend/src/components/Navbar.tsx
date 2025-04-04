@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, BarChart3,Sprout,Flower2,Tractor} from 'lucide-react';
+import { Menu, X, BarChart3, Sprout, Flower2, Tractor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Language } from '../types';
 import { cn } from '../utils/cn';
@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ t }) => {
                 <Sprout className="w-8 h-8 text-primary-600" />
               </div>
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
-                Kisan AI
+                Krishak AI
               </span>
             </NavLink>
           </div>

@@ -1,5 +1,5 @@
 import Groq from "groq-sdk";
-import getAIPrompt, { KisanAIContext } from "./aiPrompt";
+import getAIPrompt, { KrishakAIContext } from "./aiPrompt";
 
 const groq = new Groq({
   apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -18,14 +18,14 @@ interface StreamingResponse {
 
 export const getAIResponse = async (
   userInput: string,
-  context: Partial<KisanAIContext> = {},
+  context: Partial<KrishakAIContext> = {},
   onStream?: (response: StreamingResponse) => void
 ): Promise<string> => {
   if (!import.meta.env.VITE_GROQ_API_KEY) {
     throw new Error("Missing required VITE_GROQ_API_KEY environment variable");
   }
 
-  const fullContext: KisanAIContext = {
+  const fullContext: KrishakAIContext = {
     userInput,
     userLanguage: context.userLanguage || "en",
     userLocation: context.userLocation,

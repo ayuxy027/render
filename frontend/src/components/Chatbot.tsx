@@ -469,7 +469,7 @@ const AgriTechChatbot: React.FC<AgriTechChatbotProps> = ({
                   AI
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold sm:text-md">Kisan AI</h3>
+                  <h3 className="text-sm font-semibold sm:text-md">Krishak AI</h3>
                   <p className="text-xs opacity-90 sm:text-sm">Your Agriculture Innovation Guide</p>
                 </div>
               </div>

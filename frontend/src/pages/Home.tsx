@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -40,65 +40,19 @@ const GradientOrb = ({ className }: { className: string }) => (
 );
 
 export const Home: React.FC = () => {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 300], [0, -50]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
   return (
     <div className="overflow-hidden relative bg-white">
       <ScrollIndicator />
 
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <motion.div
-          animate={{
-            y: [0, -20, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute left-10 top-20"
-        >
-        </motion.div>
-        <motion.div
-          animate={{
-            x: [0, 30, 0],
-            y: [0, -10, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute right-20 top-40"
-        >
-        </motion.div>
-        <motion.div
-          animate={{
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: 200,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute bottom-20 left-1/4"
-        >
-        </motion.div>
-      </div>
-
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-30px)] flex items-center">
+      <section className="flex relative items-center min-h-screen">
         <div className="overflow-hidden absolute inset-0">
           <GradientOrb className="w-[600px] h-[600px] -left-48 -top-48 bg-blue-100/80" />
           <GradientOrb className="w-[700px] h-[700px] -right-48 -bottom-48 bg-emerald-100/80" />
           <GradientOrb className="w-[500px] h-[500px] left-1/4 top-1/4 bg-primary-100/50" />
         </div>
 
-        <motion.div style={{ y, opacity }} className="relative z-10 w-full">
+        <div className="relative z-10 w-full">
           <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div className="relative mx-auto max-w-3xl">
               <div className="text-center">
@@ -109,8 +63,8 @@ export const Home: React.FC = () => {
                   className="inline-block mb-8"
                 >
                   <motion.div
-                    className="inline-flex gap-2 items-center px-6 py-3 text-sm font-medium bg-gradient-to-r to-emerald-50 rounded-full transition-colors duration-300 from-primary-50 text-primary-900 hover:to-emerald-100 hover:from-primary-100"
-                    whileHover={{ scale: 1.05 }}
+                    className="inline-flex gap-2 items-center px-5 py-2 text-sm font-medium bg-gradient-to-r to-emerald-50 rounded-full transition-colors duration-300 from-primary-50 text-primary-900 hover:to-emerald-100 hover:from-primary-100"
+                    whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Sparkles className="w-4 h-4 text-primary-500" />
@@ -129,7 +83,7 @@ export const Home: React.FC = () => {
                   >
                     <span className="text-gray-900">Smart Farming Made Simple with</span>{' '}
                     <motion.span
-                      className="inline-block relative font-black font-['Righteous'] text-transparent bg-clip-text bg-gradient-to-r via-emerald-600 from-primary-600 to-primary-600 bg-size-200 hover:scale-105 transition-transform duration-300"
+                      className="inline-block relative font-black font-['Righteous'] text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-primary-600 bg-size-200 hover:scale-105 transition-transform duration-300"
                       animate={{
                         backgroundPosition: ['0%', '200%'],
                       }}
@@ -159,6 +113,7 @@ export const Home: React.FC = () => {
                   >
                     Use AI to make better farming decisions, detect crop diseases early, and maximize your yield
                   </motion.p>
+
                   <motion.div
                     className="flex flex-wrap gap-4 justify-center"
                     initial={{ opacity: 0, y: 20 }}
@@ -209,7 +164,7 @@ export const Home: React.FC = () => {
                     className="grid grid-cols-1 gap-4 mt-16 md:grid-cols-3"
                   >
                     {[
-                      { value: "98%", label: "Detection Accuracy", color: "from-blue-500 to-primary-500" },
+                      { value: "95%", label: "Detection Accuracy", color: "from-primary-500 to-emerald-500" },
                       { value: "24/7", label: "Real-time Monitoring", color: "from-emerald-500 to-green-500" },
                       { value: "50+", label: "Supported Crops", color: "from-primary-500 to-emerald-500" },
                     ].map((stat, index) => (
@@ -234,21 +189,14 @@ export const Home: React.FC = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* Market Section */}
-      <section className="py-24 bg-gradient-to-b from-white to-gray-50">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8"
-        >
-          <Market />
-        </motion.div>
-      </section>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white pointer-events-none to-gray-50/10" />
+        <Market />
+      </div>
     </div>
   );
 };

@@ -1,10 +1,10 @@
-# Kisan AI  
-Welcome to **Kisan AI**! 🌾  
+# Krishak AI  
+Welcome to **Krishak AI**! 🌾  
 
 ## Project Overview  
-**Kisan AI** is a comprehensive agricultural technology platform that revolutionizes farming practices through AI-driven solutions.  
+**Krishak AI** is a comprehensive agricultural technology platform that revolutionizes farming practices through AI-driven solutions.  
 
-**🏆 Kisan AI Won First Place at Rackathon 2025 🎉**
+**🏆 Krishak AI Won First Place at Rackathon 2025 🎉**
 
 🚜 **Smart farming made simple with cutting-edge technology and practical AI-driven solutions.**  
 
@@ -44,7 +44,7 @@ Welcome to **Kisan AI**! 🌾
 ## Setup and Installation  
 1. **Clone this repository:**  
    ```bash
-   git clone https://github.com/ayuxy027/KisanAI.git
+   git clone https://github.com/ayuxy027/KrishakAI.git
    ```
 2. **Install dependencies:**  
    ```bash

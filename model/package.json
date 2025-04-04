@@ -1,5 +1,5 @@
 {
-  "name": "kisan-ai",
+  "name": "Krishak-ai",
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ayuxy027/Kisan-AI.git"
+    "url": "git+https://github.com/ayuxy027/Krishak-AI.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ayuxy027/Kisan-AI/issues"
+    "url": "https://github.com/ayuxy027/Krishak-AI/issues"
   },
-  "homepage": "https://github.com/ayuxy027/Kisan-AI#readme",
+  "homepage": "https://github.com/ayuxy027/Krishak-AI#readme",
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",

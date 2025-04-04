@@ -77,7 +77,7 @@ const products: Product[] = [
     },
     {
         id: 3,
-        name: "Kisan Sprayer Drone",
+        name: "Krishak Sprayer Drone",
         image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&q=80",
         price: 50000,
         rentalPrice: 2500,
@@ -87,7 +87,7 @@ const products: Product[] = [
         available: true,
         stock: 8,
         featured: true,
-        specifications: ["HD Camera", "25min Flight Time", "GPS Enabled", "10L Tank"]
+        specifications: ["HD Camera", "25min Flight Time", "GPS Enabled"]
     },
     {
         id: 4,
@@ -192,76 +192,63 @@ const ProductCard = ({ product, index }: { product: Product; index: number }) =>
 
     return (
         <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={{
-                initial: { opacity: 0, y: 20 },
-                animate: {
-                    opacity: 1,
-                    y: 0,
-                    transition: {
-                        duration: 0.5,
-                        ease: [0.22, 1, 0.36, 1],
-                        delay: index * 0.1
-                    }
-                }
-            }}
-            whileHover={{ translateY: -4 }}
-            className="flex overflow-hidden relative flex-col p-6 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-xl"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+            className="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-300 group hover:shadow-lg"
         >
-            <div className="flex relative z-10 flex-col h-full">
-                {/* Category & Rating */}
-                <div className="flex justify-between items-center mb-6">
-                    <span className="text-sm font-medium text-gray-500">{product.category}</span>
-                    <div className="flex gap-1 items-center">
+            {/* Product Image */}
+            <div className="overflow-hidden relative h-48 bg-gray-100">
+                <img
+                    src={product.image}
+                    alt={product.name}
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                />
+                {/* Badges */}
+                <div className="flex absolute top-4 left-4 gap-2">
+                    {product.featured && (
+                        <span className="px-2.5 py-1 text-xs font-medium bg-primary-50 text-primary-600 rounded-full">
+                            Featured
+                        </span>
+                    )}
+                    {product.discount && (
+                        <span className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-600 rounded-full">
+                            {product.discount}% OFF
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+                {/* Header */}
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                            {product.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            {product.category}
+                        </p>
+                    </div>
+                    <div className="flex gap-1 items-center px-2 py-1 rounded-full backdrop-blur bg-white/90">
                         <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                         <span className="text-sm font-medium text-gray-700">{product.rating}</span>
                     </div>
                 </div>
 
-                {/* Product Image */}
-                <div className="overflow-hidden relative mb-6 w-full h-48 rounded-xl">
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="object-cover w-full h-full"
-                    />
-                </div>
-
-                {/* Title & Badges */}
-                <div className="mb-4">
-                    {(product.featured || product.discount) && (
-                        <div className="flex gap-2 mb-2">
-                            {product.featured && (
-                                <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-600">
-                                    Featured
-                                </span>
-                            )}
-                            {product.discount && (
-                                <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-rose-50 text-rose-600">
-                                    {product.discount}% OFF
-                                </span>
-                            )}
-                        </div>
-                    )}
-                    <h3 className="text-xl font-semibold tracking-tight leading-tight text-gray-900">
-                        {product.name}
-                    </h3>
-                </div>
-
                 {/* Description */}
-                <p className="mb-8 text-gray-600 text-sm/relaxed">
+                <p className="text-sm text-gray-600 line-clamp-2">
                     {product.description}
                 </p>
 
                 {/* Specifications */}
                 {product.specifications && (
-                    <div className="flex flex-wrap gap-2 mb-8">
+                    <div className="flex flex-wrap gap-2">
                         {product.specifications.map((spec, i) => (
                             <span
                                 key={i}
-                                className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 rounded-full"
+                                className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-50 rounded-full"
                             >
                                 {spec}
                             </span>
@@ -269,32 +256,34 @@ const ProductCard = ({ product, index }: { product: Product; index: number }) =>
                     </div>
                 )}
 
-                {/* Updated Pricing Display */}
-                <div className="mt-auto space-y-4">
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                {/* Pricing */}
+                <div className="pt-4 space-y-3 border-t border-gray-100">
+                    <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-600">Price</span>
-                        <div className="text-right">
-                            <span className="text-2xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
-                        </div>
+                        <span className="text-lg font-bold text-gray-900">
+                            ₹{product.price.toLocaleString()}
+                        </span>
                     </div>
                     {product.rentalPrice > 0 && (
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                            <span className="text-sm font-medium text-gray-600">Rental Price</span>
-                            <span className="text-xl font-semibold text-green-600">₹{product.rentalPrice} per Hour</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Rental</span>
+                            <span className="text-base font-medium text-emerald-600">
+                                ₹{product.rentalPrice}/hr
+                            </span>
                         </div>
                     )}
-
-                    {/* Updated Action Button */}
-                    <motion.button
-                        onClick={handlePayment}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex gap-2 justify-center items-center px-6 py-3 w-full font-medium text-white bg-green-600 rounded-xl transition-colors duration-200 hover:bg-green-700"
-                    >
-                        <ShoppingCart className="w-5 h-5" />
-                        Buy Now
-                    </motion.button>
                 </div>
+
+                {/* Action Button */}
+                <motion.button
+                    onClick={handlePayment}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full px-4 py-2.5 flex items-center justify-center gap-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors duration-200"
+                >
+                    <ShoppingCart className="w-4 h-4" />
+                    Buy Now
+                </motion.button>
             </div>
         </motion.div>
     );
@@ -346,67 +335,61 @@ const Market = () => {
         });
 
     return (
-        <div className="py-12 bg-gradient-to-b from-gray-50 to-white sm:py-20">
-            {!isRazorpayReady && (
-                <div className="px-4 mx-auto mb-8 max-w-7xl">
-                    <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                        <p className="text-yellow-800">
-                            ⚠️ Payment system is not properly configured. Please check Razorpay setup.
-                        </p>
-                    </div>
-                </div>
-            )}
-
+        <section className="py-16 bg-gray-50">
             <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                {!isRazorpayReady && (
+                    <div className="mb-8">
+                        <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+                            <p className="text-yellow-800">
+                                ⚠️ Payment system is not properly configured. Please check Razorpay setup.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-16 text-center"
-                >
+                <div className="mb-12 text-center">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
                         className="inline-block mb-4"
                     >
-                        <span className="px-4 py-1.5 rounded-full bg-primary-50 text-primary-600 text-sm font-medium">
-                            Marketplace
+                        <span className="inline-flex gap-2 items-center px-4 py-2 text-sm font-medium rounded-full bg-primary-50 text-primary-700">
+                            <ShoppingCart className="w-4 h-4" />
+                            Smart Marketplace
                         </span>
                     </motion.div>
-                    <h2 className="mb-4 text-4xl font-bold text-gray-900">
-                        Smart Farming Marketplace
+                    <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
+                        Premium Farming Equipment
                     </h2>
                     <p className="mx-auto max-w-2xl text-lg text-gray-600">
-                        Purchase or rent premium farming equipment and supplies
+                        Purchase or rent high-quality farming equipment and supplies
                     </p>
-                </motion.div>
+                </div>
 
-                {/* Updated Filters Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-12 space-y-6"
-                >
-                    {/* Search Bar */}
-                    <div className="mx-auto w-full max-w-2xl">
+                {/* Filters */}
+                <div className="mb-8 space-y-4">
+                    {/* Search */}
+                    <div className="mx-auto max-w-md">
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
+                            <Search className="absolute left-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
                             <input
                                 type="text"
                                 placeholder="Search products..."
-                                className="py-4 pr-4 pl-12 w-full text-base rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             />
                         </div>
                     </div>
 
                     {/* Filter Controls */}
-                    <div className="flex flex-wrap gap-4 justify-center items-center">
+                    <div className="flex flex-wrap gap-3 justify-center items-center">
                         <select
-                            className="px-6 py-3 text-gray-700 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
+                            className="px-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
                             {categories.map((cat) => (
                                 <option key={cat} value={cat}>{cat}</option>
@@ -414,24 +397,24 @@ const Market = () => {
                         </select>
 
                         <select
-                            className="px-6 py-3 text-gray-700 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={sort}
                             onChange={(e) => setSort(e.target.value as any)}
+                            className="px-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
                             <option value="rating">Top Rated</option>
                             <option value="price">Price: Low to High</option>
                             <option value="newest">Newest First</option>
                         </select>
 
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                             {["all", "buy", "rent"].map((type) => (
                                 <button
                                     key={type}
-                                    onClick={() => setFilter(type as "all" | "buy" | "rent")}
+                                    onClick={() => setFilter(type as any)}
                                     className={`
-                                        px-6 py-3 font-medium rounded-xl transition-all duration-200
+                                        px-4 py-2 rounded-lg font-medium transition-all duration-200
                                         ${filter === type
-                                            ? "bg-green-600 text-white"
+                                            ? "bg-primary-600 text-white"
                                             : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
                                         }
                                     `}
@@ -441,16 +424,16 @@ const Market = () => {
                             ))}
                         </div>
                     </div>
-                </motion.div>
+                </div>
 
-                {/* Responsive Products Grid */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 lg:gap-8">
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredProducts.map((product, index) => (
                         <ProductCard key={product.id} product={product} index={index} />
                     ))}
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 

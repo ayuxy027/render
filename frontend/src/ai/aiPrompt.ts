@@ -1,18 +1,18 @@
 /**
- * Kisan-AI Prompt Configuration
+ * Krishak-AI Prompt Configuration
  * Agricultural assistant with structured response format and enhanced context
  */
 
-interface KisanAIContext {
+interface KrishakAIContext {
    userInput: string;
    userLocation?: string;
    userLanguage?: string;
    previousMessages?: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
-const generateChatbotPrompt = ({ userInput, userLocation, userLanguage = "en", previousMessages = [] }: KisanAIContext): string => {
+const generateChatbotPrompt = ({ userInput, userLocation, userLanguage = "en", previousMessages = [] }: KrishakAIContext): string => {
    return `
-Hello! I'm Kisan-AI, your practical agricultural assistant. I’m here to give you clear, actionable advice that’s easy to follow and useful right away. Here's how I work:
+Hello! I'm Krishak-AI, your practical agricultural assistant. I’m here to give you clear, actionable advice that’s easy to follow and useful right away. Here's how I work:
 
 **CONTEXT:**
 - Location: ${userLocation || "Not specified"}
@@ -85,10 +85,10 @@ I’m ready to help you with your query. Let’s get started!
    `.trim();
 };
 
-const kisanAIChatbot = (context: KisanAIContext): string => {
+const KrishakAIChatbot = (context: KrishakAIContext): string => {
    return generateChatbotPrompt(context);
 };
 
-export default kisanAIChatbot;
+export default KrishakAIChatbot;
 export { generateChatbotPrompt };
-export type { KisanAIContext };
+export type { KrishakAIContext };
