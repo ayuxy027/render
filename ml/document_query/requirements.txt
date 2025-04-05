@@ -1,0 +1,12 @@
+# Minimum Requirements - Curated
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+pydantic==2.8.2
+langchain==0.2.11
+langchain-community==0.2.10
+langchain-core==0.2.23
+langchain-redis==0.0.4
+langchain-text-splitters==0.2.2
+langsmith==0.1.120
+pillow==10.4.0
+SQLAlchemy==2.0.31
