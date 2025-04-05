@@ -1,8 +1,8 @@
 import React from "react"
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
-import { Scale, Menu, X, LogIn, UserPlus } from "lucide-react"
+import { Scale, Menu, X, ChevronDown, User, Gavel, Briefcase } from "lucide-react"
 
 interface NavItem {
   label: string
@@ -10,11 +10,19 @@ interface NavItem {
   path: string
 }
 
+interface DashboardOption {
+  label: string
+  icon: React.ReactNode
+  path: string
+}
+
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
+  const [isDashboardOpen, setIsDashboardOpen] = useState<boolean>(false)
   const { scrollY } = useScroll()
   const location = useLocation()
+  const dashboardRef = useRef<HTMLDivElement>(null)
 
   const navItems: ReadonlyArray<NavItem> = useMemo(
     () => [
@@ -35,6 +43,27 @@ const Navbar: React.FC = () => {
     [],
   )
 
+  const dashboardOptions: ReadonlyArray<DashboardOption> = useMemo(
+    () => [
+      {
+        label: "Judge Dashboard",
+        icon: <Gavel className="mr-2 w-4 h-4" />,
+        path: "/judge"
+      },
+      {
+        label: "Client Dashboard",
+        icon: <User className="mr-2 w-4 h-4" />,
+        path: "/user"
+      },
+      {
+        label: "Lawyer Dashboard",
+        icon: <Briefcase className="mr-2 w-4 h-4" />,
+        path: "/lawyer"
+      },
+    ],
+    []
+  )
+
   const handleScroll = useCallback(() => {
     setIsScrolled(scrollY.get() > 20)
   }, [scrollY])
@@ -45,24 +74,68 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen((prev) => !prev)
   }, [])
 
+  const toggleDashboard = useCallback(() => {
+    setIsDashboardOpen((prev) => !prev)
+  }, [])
+
+  // Close mobile menu when location changes
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false)
+    }
+    if (isDashboardOpen) {
+      setIsDashboardOpen(false)
+    }
+  }, [location.pathname])
+
+  // Handle clicks outside of dashboard dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dashboardRef.current && !dashboardRef.current.contains(event.target as Node)) {
+        setIsDashboardOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   return (
     <>
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
-        className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? "shadow-lg backdrop-blur-lg bg-white/80" : "bg-transparent"
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${isScrolled
+          ? "py-2 shadow-md backdrop-blur-lg bg-white/90"
+          : "py-3 bg-transparent"
           }`}
       >
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary origin-left"
+          className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary/30 origin-left"
           style={{ scaleX: scrollY }}
         />
-        <div className="container px-4 mx-auto">
+        <div className="container px-6 mx-auto">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2 group">
-              <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+                className="relative"
+              >
                 <Scale className="w-8 h-8 text-primary" />
+                <motion.span
+                  className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: [0.8, 1.2, 0.8] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    repeatType: "loop"
+                  }}
+                />
               </motion.div>
               <motion.span
                 initial={{ opacity: 0, x: -20 }}
@@ -84,37 +157,72 @@ const Navbar: React.FC = () => {
                 <motion.div key={item.id} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to={item.path}
-                    className={`text-gray-700 hover:text-primary transition-colors ${location.pathname === item.path ? "font-semibold text-primary" : ""
+                    className={`text-gray-700 hover:text-primary transition-colors relative ${location.pathname === item.path
+                      ? "font-semibold text-primary"
+                      : ""
                       }`}
                   >
                     {item.label}
+                    {location.pathname === item.path && (
+                      <motion.div
+                        className="absolute h-[2px] bg-primary bottom-[-4px] left-0 right-0"
+                        layoutId="activeNavIndicator"
+                      />
+                    )}
                   </Link>
                 </motion.div>
               ))}
-            </motion.div>
 
-            <motion.div
-              className="hidden items-center space-x-4 md:flex"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <motion.button
+              {/* Dashboard Dropdown */}
+              <motion.div
+                ref={dashboardRef}
+                className="relative"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 text-sm font-medium text-white rounded-md transition-colors bg-primary hover:bg-primary-dark"
               >
-                <LogIn className="inline-block mr-2 w-4 h-4" />
-                Login
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 text-sm font-medium bg-white rounded-md border transition-colors text-primary border-primary hover:bg-primary hover:text-white"
-              >
-                <UserPlus className="inline-block mr-2 w-4 h-4" />
-                Sign Up
-              </motion.button>
+                <button
+                  onClick={toggleDashboard}
+                  className={`flex items-center text-gray-700 hover:text-primary transition-colors ${['/judge', '/user', '/lawyer'].includes(location.pathname) ? 'font-semibold text-primary' : ''
+                    }`}
+                >
+                  Dashboard
+                  <ChevronDown className={`ml-1 w-4 h-4 transition-transform ${isDashboardOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isDashboardOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 z-50 mt-2 w-56 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg"
+                    >
+                      <div className="py-1">
+                        {dashboardOptions.map((option, index) => (
+                          <Link
+                            key={index}
+                            to={option.path}
+                            className={`flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary/10 hover:text-primary ${location.pathname === option.path ? 'bg-primary/5 text-primary' : ''
+                              }`}
+                            onClick={() => setIsDashboardOpen(false)}
+                          >
+                            {option.icon}
+                            {option.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {['/judge', '/user', '/lawyer'].includes(location.pathname) && (
+                  <motion.div
+                    className="absolute h-[2px] bg-primary bottom-[-4px] left-0 right-0"
+                    layoutId="activeNavIndicator"
+                  />
+                )}
+              </motion.div>
             </motion.div>
 
             <motion.button
@@ -122,6 +230,7 @@ const Navbar: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               className="p-2 md:hidden"
               onClick={toggleMobileMenu}
+              aria-label="Toggle mobile menu"
             >
               <AnimatePresence mode="wait" initial={false}>
                 {isMobileMenuOpen ? (
@@ -151,6 +260,9 @@ const Navbar: React.FC = () => {
         </div>
       </motion.nav>
 
+      {/* Spacer div to prevent content from being hidden behind fixed navbar */}
+      <div className="h-[72px]" aria-hidden="true" />
+
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -158,10 +270,10 @@ const Navbar: React.FC = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-x-0 top-16 z-40 bg-white shadow-lg"
+            className="fixed inset-x-0 top-[72px] z-40 bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-200"
           >
             <motion.div
-              className="px-4 py-2 space-y-2"
+              className="px-6 py-4 space-y-3"
               initial="closed"
               animate="open"
               exit="closed"
@@ -187,32 +299,34 @@ const Navbar: React.FC = () => {
                   >
                     {item.label}
                   </Link>
+                  {location.pathname === item.path && (
+                    <div className="h-[2px] w-16 bg-primary mt-1" />
+                  )}
                 </motion.div>
               ))}
+
+              {/* Mobile Dashboard Menu */}
               <motion.div
-                className="flex flex-col pt-2 space-y-2 border-t border-gray-200"
                 variants={{
                   open: { y: 0, opacity: 1 },
                   closed: { y: -20, opacity: 0 },
                 }}
                 transition={{ duration: 0.2 }}
+                className="pt-2 border-t border-gray-200"
               >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="py-2 text-sm font-medium text-white rounded-md transition-colors bg-primary hover:bg-primary-dark"
-                >
-                  <LogIn className="inline-block mr-2 w-4 h-4" />
-                  Login
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="py-2 text-sm font-medium bg-white rounded-md border transition-colors text-primary border-primary hover:bg-primary hover:text-white"
-                >
-                  <UserPlus className="inline-block mr-2 w-4 h-4" />
-                  Sign Up
-                </motion.button>
+                <div className="py-2 font-medium">Dashboards</div>
+                {dashboardOptions.map((option, index) => (
+                  <Link
+                    key={index}
+                    to={option.path}
+                    className={`flex items-center py-2 pl-4 text-gray-700 hover:text-primary transition-colors ${location.pathname === option.path ? 'font-semibold text-primary' : ''
+                      }`}
+                    onClick={toggleMobileMenu}
+                  >
+                    {option.icon}
+                    {option.label}
+                  </Link>
+                ))}
               </motion.div>
             </motion.div>
           </motion.div>
