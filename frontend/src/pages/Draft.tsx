@@ -66,7 +66,6 @@ const LegalDocumentGenerator: React.FC = () => {
     handleSubmit,
     formState: { errors },
     watch,
-    setValue
   } = useForm<FormInputs>({
     defaultValues: {
       documentType: undefined,

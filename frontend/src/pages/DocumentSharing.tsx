@@ -1,7 +1,8 @@
-import React, { useState, useRef, useCallback, DragEvent, ChangeEvent, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, X, Download, Shield, Link, RefreshCw } from 'lucide-react';
+import { FileText, Download, Shield, Link, RefreshCw, Terminal } from 'lucide-react';
 import { ethers } from 'ethers';
+import FileUpload, { UploadedFile as FileUploadFile } from '../components/FileUpload';
 
 // Add Ethereum provider to window object
 declare global {
@@ -9,8 +10,6 @@ declare global {
         ethereum: any;
     }
 }
-
-type FileType = File & { preview?: string };
 
 interface FileInfo {
     name: string;
@@ -27,6 +26,14 @@ enum ProcessingStatus {
     Retrieving = 'retrieving',
     Completed = 'completed',
     Error = 'error',
+}
+
+// Interface for blockchain log messages
+interface BlockchainLog {
+    type: 'info' | 'error' | 'success' | 'warning';
+    message: string;
+    timestamp: Date;
+    data?: any;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -62,7 +69,6 @@ const mockBlockchainStore = new Map<string, {
 }>();
 
 const DocumentSharing: React.FC = () => {
-    const [file, setFile] = useState<FileType | null>(null);
     const [uploadedFiles, setUploadedFiles] = useState<FileInfo[]>([]);
     const [status, setStatus] = useState<ProcessingStatus>(ProcessingStatus.Idle);
     const [errorMessage, setErrorMessage] = useState<string>('');
@@ -70,10 +76,40 @@ const DocumentSharing: React.FC = () => {
     const [walletConnected, setWalletConnected] = useState<boolean>(false);
     const [walletAddress, setWalletAddress] = useState<string>('');
     const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-    const [contract, setContract] = useState<ethers.Contract | null>(null);
+    const [_contract, setContract] = useState<ethers.Contract | null>(null);
     const [isLoadingFiles, setIsLoadingFiles] = useState<boolean>(false);
+    const [showBlockchainLogs, setShowBlockchainLogs] = useState<boolean>(false);
+    const [blockchainLogs, setBlockchainLogs] = useState<BlockchainLog[]>([]);
+    const blockchainLogsEndRef = useRef<HTMLDivElement>(null);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // Auto-scroll logs to bottom
+    useEffect(() => {
+        if (blockchainLogsEndRef.current) {
+            blockchainLogsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [blockchainLogs]);
+
+    // Custom blockchain logger
+    const logBlockchain = useCallback((type: 'info' | 'error' | 'success' | 'warning', message: string, data?: any) => {
+        // Log to browser console
+        if (type === 'error') {
+            console.error(`[BLOCKCHAIN] ${message}`, data);
+        } else if (type === 'warning') {
+            console.warn(`[BLOCKCHAIN] ${message}`, data);
+        } else if (type === 'success') {
+            console.log(`%c[BLOCKCHAIN] ${message}`, 'color: green', data);
+        } else {
+            console.log(`[BLOCKCHAIN] ${message}`, data);
+        }
+
+        // Add to blockchain logs
+        setBlockchainLogs(prev => [...prev, {
+            type,
+            message,
+            timestamp: new Date(),
+            data
+        }]);
+    }, []);
 
     // Setup blockchain connection
     useEffect(() => {
@@ -81,22 +117,32 @@ const DocumentSharing: React.FC = () => {
             // Check if MetaMask is installed
             if (typeof window.ethereum !== 'undefined') {
                 try {
+                    logBlockchain('info', 'Initializing blockchain connection...');
+
                     // Setup ethers provider
                     const ethProvider = new ethers.BrowserProvider(window.ethereum);
                     setProvider(ethProvider);
+                    logBlockchain('info', 'Ethereum provider initialized');
 
                     // Create contract instance
                     const midnightStorage = new ethers.Contract(CONTRACT_ADDRESS, MidnightStorageABI, ethProvider);
                     setContract(midnightStorage);
+                    logBlockchain('info', 'Contract instance created', {
+                        address: CONTRACT_ADDRESS,
+                        abi: MidnightStorageABI
+                    });
 
                     // Check if already connected
                     const accounts = await ethProvider.listAccounts();
                     if (accounts.length > 0) {
                         setWalletConnected(true);
                         setWalletAddress(accounts[0].address);
+                        logBlockchain('success', 'Wallet already connected', { address: accounts[0].address });
 
                         // Load files after connecting
                         await loadFilesFromBlockchain();
+                    } else {
+                        logBlockchain('warning', 'No wallet connected yet. Please connect wallet to interact with blockchain.');
                     }
 
                     // Setup wallet change listener
@@ -104,16 +150,21 @@ const DocumentSharing: React.FC = () => {
                         if (accounts.length > 0) {
                             setWalletConnected(true);
                             setWalletAddress(accounts[0]);
+                            logBlockchain('info', 'Wallet changed', { newAddress: accounts[0] });
                             loadFilesFromBlockchain();
                         } else {
                             setWalletConnected(false);
                             setWalletAddress('');
                             setUploadedFiles([]);
+                            logBlockchain('warning', 'Wallet disconnected');
                         }
                     });
                 } catch (error) {
                     console.error('Failed to initialize blockchain', error);
+                    logBlockchain('error', 'Failed to initialize blockchain', error);
                 }
+            } else {
+                logBlockchain('error', 'MetaMask not detected! Please install MetaMask extension.');
             }
         };
 
@@ -127,19 +178,21 @@ const DocumentSharing: React.FC = () => {
                 });
             }
         };
-    }, []);
+    }, [logBlockchain]);
 
     const connectWallet = async () => {
         if (typeof window.ethereum === 'undefined') {
-            setErrorMessage(
-                'MetaMask not detected! Please install MetaMask extension: https://metamask.io/download/'
-            );
+            const errorMsg = 'MetaMask not detected! Please install MetaMask extension: https://metamask.io/download/';
+            setErrorMessage(errorMsg);
+            logBlockchain('error', errorMsg);
             return;
         }
 
         if (!provider) return;
 
         try {
+            logBlockchain('info', 'Requesting wallet connection...');
+
             // Request account access
             await window.ethereum.request({ method: 'eth_requestAccounts' });
             const accounts = await provider.listAccounts();
@@ -147,12 +200,14 @@ const DocumentSharing: React.FC = () => {
             if (accounts.length > 0) {
                 setWalletConnected(true);
                 setWalletAddress(accounts[0].address);
+                logBlockchain('success', 'Wallet connected successfully', { address: accounts[0].address });
 
                 // Load files after connecting
                 await loadFilesFromBlockchain();
             }
         } catch (error) {
             console.error('Error connecting wallet:', error);
+            logBlockchain('error', 'Failed to connect wallet', error);
             setErrorMessage('Failed to connect wallet. Please try again.');
         }
     };
@@ -162,6 +217,8 @@ const DocumentSharing: React.FC = () => {
         if (!walletConnected) return;
 
         setIsLoadingFiles(true);
+        logBlockchain('info', 'Loading files from blockchain...');
+
         try {
             // In a real implementation, we would query the smart contract
             // For this demo, we'll simulate by returning mock data
@@ -170,6 +227,7 @@ const DocumentSharing: React.FC = () => {
             setUploadedFiles([]);
 
             // Simulate blockchain delay
+            logBlockchain('info', 'Querying smart contract...');
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             // Get files from our mock store
@@ -184,132 +242,46 @@ const DocumentSharing: React.FC = () => {
                 });
             });
 
+            logBlockchain('success', `Found ${files.length} files in registry`);
             setUploadedFiles(files);
         } catch (error) {
             console.error('Error loading files:', error);
+            logBlockchain('error', 'Failed to load files from blockchain', error);
             setErrorMessage('Failed to load files from blockchain.');
         } finally {
             setIsLoadingFiles(false);
         }
     };
 
-    const handleFileSelection = useCallback((selectedFile: File) => {
-        const typedFile = selectedFile as FileType;
-        typedFile.preview = URL.createObjectURL(selectedFile);
-
-        setFile(typedFile);
-        setStatus(ProcessingStatus.Idle);
-        setErrorMessage('');
-    }, []);
-
-    const handleFileChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            const selectedFile = e.target.files?.[0];
-            if (selectedFile) {
-                handleFileSelection(selectedFile);
-            }
-        },
-        [handleFileSelection]
-    );
-
-    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, []);
-
-    const handleDrop = useCallback(
-        (e: DragEvent<HTMLDivElement>) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const droppedFile = e.dataTransfer.files[0];
-            if (droppedFile) {
-                handleFileSelection(droppedFile);
-            }
-        },
-        [handleFileSelection]
-    );
-
-    const removeFile = useCallback(() => {
-        if (file?.preview) {
-            URL.revokeObjectURL(file.preview);
-        }
-
-        setFile(null);
-        setStatus(ProcessingStatus.Idle);
-        setErrorMessage('');
-
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    }, [file]);
-
-    // Function to prepare file for blockchain storage
-    const prepareFileForBlockchain = async (fileToStore: File): Promise<Uint8Array> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-                if (!event.target || !event.target.result) {
-                    reject(new Error('Failed to read file'));
-                    return;
-                }
-
-                const arrayBuffer = event.target.result as ArrayBuffer;
-                const bytes = new Uint8Array(arrayBuffer);
-
-                // For large files, we would hash the content instead of storing directly
-                // This is a simplified example - in real implementation, we'd use IPFS or another storage solution
-                // and only store the hash on-chain
-                resolve(bytes);
-            };
-
-            reader.onerror = () => reject(reader.error);
-            reader.readAsArrayBuffer(fileToStore);
-        });
-    };
-
-    // For demo purposes, we'll simulate blockchain storage
-    const simulateBlockchainStorage = async (
-        fileName: string,
-        fileType: string,
-        fileSize: number,
-        fileContent: Uint8Array
-    ): Promise<string> => {
-        // Generate a transaction hash
-        const txHash = "0x" + Array.from(crypto.getRandomValues(new Uint8Array(32)))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-
-        // Store in our mock blockchain store
-        mockBlockchainStore.set(txHash, {
-            name: fileName,
-            type: fileType,
-            size: fileSize,
-            content: fileContent,
-            timestamp: Date.now()
-        });
-
-        return txHash;
-    };
-
     // Retrieve file from blockchain
     const retrieveFileFromBlockchain = async (txHash: string): Promise<Uint8Array | null> => {
         setStatus(ProcessingStatus.Retrieving);
+        logBlockchain('info', `Retrieving file with transaction hash: ${txHash}`);
 
         try {
             // Simulate blockchain delay
+            logBlockchain('info', 'Querying smart contract for file data...');
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             // In a real implementation, we would query the smart contract
             const fileData = mockBlockchainStore.get(txHash);
 
             if (!fileData) {
-                throw new Error('File not found in blockchain');
+                const errorMsg = 'File not found in blockchain';
+                logBlockchain('error', errorMsg);
+                throw new Error(errorMsg);
             }
+
+            logBlockchain('success', 'File data retrieved successfully', {
+                name: fileData.name,
+                size: fileData.size,
+                type: fileData.type
+            });
 
             return fileData.content;
         } catch (error) {
             console.error('Error retrieving file:', error);
+            logBlockchain('error', 'Failed to retrieve file from blockchain', error);
             setErrorMessage('Failed to retrieve file from blockchain.');
             return null;
         } finally {
@@ -321,6 +293,7 @@ const DocumentSharing: React.FC = () => {
     const downloadFile = async (fileInfo: FileInfo) => {
         try {
             setStatus(ProcessingStatus.Retrieving);
+            logBlockchain('info', `Starting download for file: ${fileInfo.name}`);
 
             // Retrieve the file content
             const fileContent = await retrieveFileFromBlockchain(fileInfo.txHash);
@@ -331,6 +304,7 @@ const DocumentSharing: React.FC = () => {
             }
 
             // Create a blob and download link
+            logBlockchain('info', 'Creating blob for download...');
             const blob = new Blob([fileContent], { type: fileInfo.type || 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
 
@@ -343,68 +317,56 @@ const DocumentSharing: React.FC = () => {
 
             URL.revokeObjectURL(url);
             setStatus(ProcessingStatus.Idle);
+            logBlockchain('success', 'File download initiated successfully');
         } catch (error) {
             console.error('Error downloading file:', error);
+            logBlockchain('error', 'Failed to download file', error);
             setErrorMessage('Failed to download file.');
             setStatus(ProcessingStatus.Error);
         }
     };
 
-    const handleSubmit = async () => {
-        if (!file) {
-            setErrorMessage('Please select a file to upload.');
-            return;
-        }
+    // Handle successful file upload from FileUpload component
+    const handleFileUploaded = (fileData: FileUploadFile) => {
+        logBlockchain('info', 'File uploaded successfully, storing on blockchain', {
+            name: fileData.name,
+            cid: fileData.cid,
+            size: fileData.size
+        });
 
-        if (!walletConnected) {
-            setErrorMessage('Please connect your wallet first.');
-            return;
-        }
+        // Generate a mock content for the file (in a real app, this would be handled differently)
+        const mockContent = new Uint8Array(10); // Just a placeholder
 
-        try {
-            setStatus(ProcessingStatus.Processing);
+        // Store in mock blockchain for retrieval later
+        mockBlockchainStore.set(fileData.txHash, {
+            name: fileData.name,
+            size: fileData.size,
+            type: fileData.type || 'application/octet-stream',
+            content: mockContent,
+            timestamp: fileData.uploadedAt.getTime()
+        });
 
-            // For demo purposes, we'll simulate blockchain storage instead of actually 
-            // uploading large files to the blockchain (which would be impractical)
-            const fileBytes = await prepareFileForBlockchain(file);
+        // Convert FileUpload's UploadedFile to DocumentSharing's FileInfo
+        const newFileInfo: FileInfo = {
+            name: fileData.name,
+            size: fileData.size,
+            type: fileData.type || 'application/octet-stream',
+            txHash: fileData.txHash,
+            timestamp: fileData.uploadedAt.getTime()
+        };
 
-            // In a real implementation, we'd use IPFS or similar for file storage
-            // and only store the hash/metadata on blockchain
-            const txHash = await simulateBlockchainStorage(
-                file.name,
-                file.type,
-                file.size,
-                fileBytes // Use full file content for storage
-            );
+        // Add to uploadedFiles state
+        setUploadedFiles(prev => [newFileInfo, ...prev]);
 
-            // Add uploaded file details to the list
-            setUploadedFiles((prevFiles) => [
-                ...prevFiles,
-                {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    txHash,
-                    timestamp: Date.now()
-                },
-            ]);
+        // Show success message
+        setSuccessMessage('File successfully registered on the blockchain!');
+        setTimeout(() => setSuccessMessage(''), 3000);
 
-            // Show success message
-            setSuccessMessage('File successfully registered on the blockchain!');
-            setTimeout(() => setSuccessMessage(''), 3000);
-
-            // Clear the current file
-            setFile(null);
-            setStatus(ProcessingStatus.Completed);
-
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        } catch (error) {
-            console.error(error);
-            setStatus(ProcessingStatus.Error);
-            setErrorMessage('Failed to process the file. Please try again.');
-        }
+        // Reset status
+        setStatus(ProcessingStatus.Completed);
+        logBlockchain('success', 'File metadata saved to blockchain', {
+            txHash: fileData.txHash
+        });
     };
 
     // Get status message
@@ -428,7 +390,7 @@ const DocumentSharing: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-b from-background to-secondary/10"
+            className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-b from-background to-secondary/10"
         >
             <motion.div
                 layout
@@ -437,16 +399,16 @@ const DocumentSharing: React.FC = () => {
                 <motion.div
                     initial={{ y: -50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50"
+                    className="flex justify-between items-center p-6 bg-gray-50 border-b border-gray-200"
                 >
                     <div>
                         <h1 className="flex items-center space-x-2 text-3xl font-bold text-primary">
                             <FileText className="w-8 h-8 text-primary" />
-                            <span>Midnight Blockchain</span>
+                            <span>Blockchain Storage and Retrieval</span>
                         </h1>
                         <p className="mt-2 text-gray-600">Secure blockchain-based file registration and verification system.</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex gap-4 items-center">
                         {!walletConnected ? (
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
@@ -454,7 +416,7 @@ const DocumentSharing: React.FC = () => {
                                 onClick={connectWallet}
                                 className="flex items-center px-4 py-2 text-white bg-indigo-600 rounded-md"
                             >
-                                <Shield className="w-5 h-5 mr-2" />
+                                <Shield className="mr-2 w-5 h-5" />
                                 Connect Wallet
                             </motion.button>
                         ) : (
@@ -464,88 +426,107 @@ const DocumentSharing: React.FC = () => {
                                     whileTap={{ scale: 0.95 }}
                                     onClick={loadFilesFromBlockchain}
                                     disabled={isLoadingFiles}
-                                    className="flex items-center px-3 py-2 text-indigo-600 border border-indigo-600 rounded-md"
+                                    className="flex items-center px-3 py-2 text-indigo-600 rounded-md border border-indigo-600"
                                 >
                                     <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingFiles ? 'animate-spin' : ''}`} />
                                     Refresh
                                 </motion.button>
                                 <div className="flex items-center px-4 py-2 bg-gray-100 rounded-md">
-                                    <Shield className="w-5 h-5 mr-2 text-green-500" />
+                                    <Shield className="mr-2 w-5 h-5 text-green-500" />
                                     <span className="font-medium">
                                         {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
                                     </span>
                                 </div>
                             </>
                         )}
+
+                        {/* Blockchain logs toggle */}
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowBlockchainLogs(prev => !prev)}
+                            className="flex items-center px-3 py-2 text-gray-600 rounded-md border border-gray-300"
+                        >
+                            <Terminal className="mr-2 w-4 h-4" />
+                            {showBlockchainLogs ? 'Hide' : 'Show'} Logs
+                        </motion.button>
                     </div>
                 </motion.div>
 
-                <div className="flex flex-col flex-1 overflow-y-auto">
-                    <div className="flex flex-col items-center justify-center p-6">
-                        <AnimatePresence>
-                            {!file && (
-                                <motion.div
-                                    key="file-upload"
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    className="flex flex-col items-center justify-center w-full h-64 transition-colors duration-200 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-primary"
-                                    onDragOver={handleDragOver}
-                                    onDrop={handleDrop}
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <Upload className="w-12 h-12 mb-4 text-gray-400" />
-                                    <p className="mb-2 text-gray-600">Drag and drop your file here</p>
-                                    <p className="text-sm text-gray-400">or</p>
-                                    <motion.button className="px-4 py-2 mt-2 text-white bg-primary rounded-md">
-                                        Select File
-                                    </motion.button>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                    />
-                                </motion.div>
-                            )}
-
-                            {file && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 50 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="w-full"
-                                >
-                                    <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
-                                        <div className="flex items-center space-x-4">
-                                            <FileText className="w-8 h-8 text-primary" />
-                                            <div>
-                                                <p className="font-medium">{file.name}</p>
-                                                <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
-                                            </div>
-                                        </div>
-                                        <motion.button onClick={removeFile} className="text-gray-500 hover:text-gray-700">
-                                            <X className="w-6 h-6" />
-                                        </motion.button>
+                <div className="flex overflow-y-auto flex-col flex-1">
+                    {/* Blockchain logs */}
+                    <AnimatePresence>
+                        {showBlockchainLogs && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="border-b border-gray-200"
+                            >
+                                <div className="p-4 text-white bg-gray-800">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="flex items-center text-lg font-semibold">
+                                            <Terminal className="mr-2 w-4 h-4" />
+                                            Blockchain Activity Logs
+                                        </h3>
+                                        <button
+                                            onClick={() => setBlockchainLogs([])}
+                                            className="px-2 py-1 text-xs text-gray-300 rounded border border-gray-600 hover:text-white"
+                                        >
+                                            Clear Logs
+                                        </button>
                                     </div>
-                                    <motion.button
-                                        onClick={handleSubmit}
-                                        className="w-full py-3 mt-4 text-white bg-primary rounded-md disabled:bg-gray-400"
-                                        disabled={!walletConnected}
-                                    >
-                                        {status === ProcessingStatus.Processing ? 'Processing...' : 'Register on Blockchain'}
-                                    </motion.button>
+                                    <div className="overflow-y-auto p-2 h-32 font-mono text-xs bg-gray-900 rounded">
+                                        {blockchainLogs.length === 0 ? (
+                                            <div className="italic text-gray-500">No blockchain activity recorded yet</div>
+                                        ) : (
+                                            blockchainLogs.map((log, index) => (
+                                                <div key={index} className="mb-1">
+                                                    <span className="text-gray-500">
+                                                        [{log.timestamp.toLocaleTimeString()}]
+                                                    </span>{' '}
+                                                    <span className={
+                                                        log.type === 'error' ? 'text-red-400' :
+                                                            log.type === 'success' ? 'text-green-400' :
+                                                                log.type === 'warning' ? 'text-yellow-400' :
+                                                                    'text-blue-400'
+                                                    }>
+                                                        {log.type.toUpperCase()}:
+                                                    </span>{' '}
+                                                    <span>{log.message}</span>
+                                                    {log.data && (
+                                                        <pre className="ml-6 text-gray-400 whitespace-pre-wrap">{
+                                                            typeof log.data === 'object'
+                                                                ? JSON.stringify(log.data, null, 2)
+                                                                : String(log.data)
+                                                        }</pre>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
+                                        <div ref={blockchainLogsEndRef} />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                                    {!walletConnected && (
-                                        <p className="mt-2 text-sm text-center text-red-500">
-                                            Please connect your wallet first
-                                        </p>
-                                    )}
-
-                                    {status === ProcessingStatus.Error && (
-                                        <div className="mt-4 text-red-500">{errorMessage}</div>
-                                    )}
-                                </motion.div>
-                            )}
+                    <div className="flex flex-col justify-center items-center p-6">
+                        <AnimatePresence>
+                            {/* FileUpload component */}
+                            <motion.div
+                                key="file-upload-component"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="mb-4 w-full"
+                            >
+                                <FileUpload
+                                    walletAddress={walletAddress}
+                                    isWalletConnected={walletConnected}
+                                    onFileUploaded={handleFileUploaded}
+                                />
+                            </motion.div>
                         </AnimatePresence>
                     </div>
 
@@ -553,7 +534,7 @@ const DocumentSharing: React.FC = () => {
                         <motion.div className="p-4 mt-4 text-center text-green-500">{successMessage}</motion.div>
                     )}
 
-                    {errorMessage && !file && (
+                    {errorMessage && (
                         <motion.div className="p-4 mt-4 text-center text-red-500">{errorMessage}</motion.div>
                     )}
 
@@ -571,7 +552,7 @@ const DocumentSharing: React.FC = () => {
                     <div className="p-6">
                         <h2 className="mb-4 text-2xl font-bold text-primary">Blockchain Registry</h2>
                         {isLoadingFiles ? (
-                            <div className="flex items-center justify-center h-32">
+                            <div className="flex justify-center items-center h-32">
                                 <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
                                 <span className="ml-2 text-indigo-600">Loading files from blockchain...</span>
                             </div>
@@ -594,7 +575,7 @@ const DocumentSharing: React.FC = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         className="p-4 bg-gray-100 rounded-lg shadow"
                                     >
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex justify-between items-center mb-4">
                                             <div>
                                                 <p className="font-medium text-gray-700">{doc.name}</p>
                                                 <p className="text-sm text-gray-500">{formatFileSize(doc.size)}</p>
@@ -608,7 +589,7 @@ const DocumentSharing: React.FC = () => {
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center text-xs text-indigo-600 hover:underline"
                                                     >
-                                                        <Link className="w-3 h-3 mr-1" />
+                                                        <Link className="mr-1 w-3 h-3" />
                                                         View on Blockchain
                                                     </a>
                                                     <div>
@@ -617,7 +598,7 @@ const DocumentSharing: React.FC = () => {
                                                             className="inline-flex items-center text-xs text-green-600 hover:underline"
                                                             disabled={status === ProcessingStatus.Retrieving}
                                                         >
-                                                            <Download className="w-3 h-3 mr-1" />
+                                                            <Download className="mr-1 w-3 h-3" />
                                                             {status === ProcessingStatus.Retrieving ? 'Retrieving...' : 'Download File'}
                                                         </button>
                                                     </div>

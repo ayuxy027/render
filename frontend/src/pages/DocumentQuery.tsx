@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initializeDocumentChat, sendChatMessage } from '../services/ragChatService';
-import { getDocumentChatPrompt, getDocumentChatSystemPrompt } from '../prompts/documentChatPrompt';
+import { getDocumentChatPrompt } from '../prompts/documentChatPrompt';
 
 // Enhanced type definitions with more specificity
 type MessageType = 'user' | 'bot' | 'system';
@@ -313,7 +313,7 @@ const DocumentQuery: FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-b from-background to-secondary/10"
+      className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-b from-background to-secondary/10"
     >
       <motion.div
         layout
@@ -324,7 +324,7 @@ const DocumentQuery: FC = () => {
           <motion.div
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50"
+            className="flex justify-between items-center p-4 bg-gray-50 border-b border-gray-200"
           >
             <h2 className="flex items-center space-x-2 text-2xl font-bold text-primary">
               <FileText className="w-6 h-6 text-primary" />
@@ -335,14 +335,14 @@ const DocumentQuery: FC = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 transition-colors duration-200 rounded-full hover:bg-gray-100"
+                className="p-2 rounded-full transition-colors duration-200 hover:bg-gray-100"
               >
                 {isExpanded ? <Minimize2 className="w-5 h-5 text-gray-600" /> : <Maximize2 className="w-5 h-5 text-gray-600" />}
               </motion.button>
               <motion.button
                 whileHover={{ rotate: 180 }}
                 onClick={resetChat}
-                className="p-2 transition-colors duration-200 rounded-full hover:bg-gray-100"
+                className="p-2 rounded-full transition-colors duration-200 hover:bg-gray-100"
               >
                 <RotateCcw className="w-5 h-5 text-gray-600" />
               </motion.button>
@@ -351,22 +351,22 @@ const DocumentQuery: FC = () => {
 
           <div
             ref={chatContainerRef}
-            className="flex-1 p-4 space-y-4 overflow-y-auto"
+            className="overflow-y-auto flex-1 p-4 space-y-4"
           >
             {/* Welcome message when no document is loaded */}
             {messages.length === 0 && !file && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center p-6 max-w-md">
-                  <FileText className="mx-auto w-16 h-16 text-primary/40 mb-4" />
-                  <h3 className="text-xl font-medium text-gray-800 mb-2">Upload a Document</h3>
-                  <p className="text-gray-600 mb-4">
+              <div className="flex justify-center items-center h-full">
+                <div className="p-6 max-w-md text-center">
+                  <FileText className="mx-auto mb-4 w-16 h-16 text-primary/40" />
+                  <h3 className="mb-2 text-xl font-medium text-gray-800">Upload a Document</h3>
+                  <p className="mb-4 text-gray-600">
                     Upload a document and ask questions about its content. I'll analyze the document and help you understand it.
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                    className="px-4 py-2 text-white rounded-lg transition-colors bg-primary hover:bg-primary/90"
                   >
-                    <Paperclip className="inline-block w-4 h-4 mr-2" />
+                    <Paperclip className="inline-block mr-2 w-4 h-4" />
                     Upload Document
                   </button>
                 </div>
@@ -377,7 +377,7 @@ const DocumentQuery: FC = () => {
             {error && (
               <div className="p-4 mb-4 bg-red-50 rounded-lg border border-red-200">
                 <div className="flex items-start">
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+                  <AlertCircle className="flex-shrink-0 mr-2 w-5 h-5 text-red-500" />
                   <div>
                     <h3 className="font-medium text-red-800">Error</h3>
                     <p className="text-sm text-red-700">{error}</p>
@@ -400,7 +400,7 @@ const DocumentQuery: FC = () => {
                     }`}
                 >
                   {message.type === 'system' ? (
-                    <div className="py-2 px-4 bg-gray-100 rounded-lg text-gray-600 text-sm">
+                    <div className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg">
                       {message.content}
                     </div>
                   ) : (
@@ -420,8 +420,8 @@ const DocumentQuery: FC = () => {
             {/* File processing indicator */}
             {isProcessingFile && (
               <div className="flex justify-center">
-                <div className="flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
-                  <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                <div className="flex items-center px-4 py-2 space-x-2 rounded-full bg-primary/10 text-primary">
+                  <div className="w-4 h-4 rounded-full border-2 animate-spin border-primary border-t-transparent"></div>
                   <span>Analyzing document...</span>
                 </div>
               </div>
@@ -435,9 +435,9 @@ const DocumentQuery: FC = () => {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-4 border-t border-gray-200 bg-gray-50"
+                className="p-4 bg-gray-50 border-t border-gray-200"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
                     <Paperclip className="w-5 h-5 text-gray-500" />
                     <span className="text-sm font-medium text-gray-700">{fileInfo.name}</span>
@@ -472,7 +472,7 @@ const DocumentQuery: FC = () => {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={documentContext ? "Ask a question about the document..." : "Upload a document first..."}
                   disabled={!documentContext || isProcessingFile || isProcessingMessage}
-                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-400"
+                  className="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-400"
                 />
                 <label>
                   <input

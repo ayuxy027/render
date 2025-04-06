@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { aiPrompt, GROQ_CONFIG, SUPPORTED_LANGUAGES } from '../ai/aiPrompt';
 import axios from 'axios';
-import ISO6391 from 'iso-639-1';
+
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Groq from 'groq-sdk';
@@ -217,7 +217,8 @@ const chatWindowVariants: Variants = {
 const messageVariants: Variants = {
   hidden: {
     opacity: 0,
-    x: message => message.sender === 'user' ? 20 : -20,
+    // @ts-ignore 
+    x: (message: Message) => message.sender === 'user' ? 20 : -20,
     scale: 0.9
   },
   visible: {
@@ -233,21 +234,6 @@ const toggleButtonVariants: Variants = {
   hover: { scale: 1.1 },
   tap: { scale: 0.95 }
 };
-
-const dropdownVariants: Variants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.2 }
-  },
-  exit: {
-    opacity: 0,
-    y: -10,
-    transition: { duration: 0.2 }
-  }
-};
-
 // Main Chatbot component
 const LegaleChatbot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -305,7 +291,7 @@ const LegaleChatbot: React.FC = () => {
     if (!content) return "I apologize, but I couldn't generate a response. Please try again.";
 
     let cleanedContent = content.trim();
-    cleanedContent = cleanedContent.replace(/```\s*\n([\s\S]*?)\n```/g, (match, codeContent) => {
+    cleanedContent = cleanedContent.replace(/```\s*\n([\s\S]*?)\n```/g, (_match, codeContent) => {
       return '```text\n' + codeContent + '\n```';
     });
 

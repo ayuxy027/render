@@ -382,7 +382,7 @@ const JudgeDashboard: React.FC = () => {
           <div className="space-y-8">
             <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-primary-dark">Upcoming Events</h3>
-              <Calendar customEvents={events} showEventDetails={true} />
+              <Calendar customEvents={events} />
             </div>
 
             {/* Quick Stats */}
